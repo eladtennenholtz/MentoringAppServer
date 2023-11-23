@@ -10,8 +10,8 @@ app.use(cors());
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://site-production-255a.up.railway.app",
-    methods: ["GET", "POST"],
+    origin: "*",
+    methods: ["*"],
   },
 });
 
