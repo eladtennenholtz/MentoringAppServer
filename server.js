@@ -3,6 +3,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const { env } = require("process");
 
 const app = express();
 app.use(cors());
@@ -18,7 +19,7 @@ const io = new Server(server, {
 async function connectToMongoDB() {
   try {
     await mongoose.connect(
-      "mongodb://mongo:5CFceB3gAaa-F3eEBD4Fh-HA5515326F:57262/codeBlocksDB",
+      "mongodb://mongo:5CFceB3gAaa-F3eEBD4Fh-HA5515326F@mongodb.railway.internal:27017",
       {
         useNewUrlParser: true,
         useUnifiedTopology: true,
