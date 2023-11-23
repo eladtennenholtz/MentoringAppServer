@@ -19,13 +19,22 @@ const io = new Server(server, {
 async function connectToMongoDB() {
   try {
     await mongoose.connect(
-      "mongodb://mongo:5CFceB3gAaa-F3eEBD4Fh-HA5515326F@monorail.proxy.rlwy.net:57262/codeBlocksDB",
+      "mongodb://mongo:5CFceB3gAaa-F3eEBD4Fh-HA5515326F@monorail.proxy.rlwy.net:57262",
       {
         useNewUrlParser: true,
         useUnifiedTopology: true,
       }
     );
+    // Check if the database exists, create it if not
+    const adminDb = mongoose.connection.db.admin();
+    const databases = await adminDb.listDatabases();
+    const databaseExists = databases.databases.some(
+      (db) => db.name === "codeBlocksDB"
+    );
 
+    if (!databaseExists) {
+      await adminDb.createDatabase("codeBlocksDB");
+    }
     console.log("Connected to MongoDB");
   } catch (error) {
     console.error("Error connecting to MongoDB:", error);
