@@ -19,7 +19,7 @@ const io = new Server(server, {
 async function connectToMongoDB() {
   try {
     await mongoose.connect(
-      "mongodb://monorail.proxy.rlwy.net:57262/codeBlocksDB",
+      "mongodb://mongo:5CFceB3gAaa-F3eEBD4Fh-HA5515326F@monorail.proxy.rlwy.net:57262/codeBlocksDB",
       {
         useNewUrlParser: true,
         useUnifiedTopology: true,
