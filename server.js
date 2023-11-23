@@ -14,95 +14,94 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
   },
 });
+
 async function connectToMongoDB() {
   try {
-    await mongoose.connect("mongodb://127.0.0.1:27017/codeBlocksDB");
+    await mongoose.connect("mongodb://127.0.0.1:27017/codeBlocksDB", {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
 
     console.log("Connected to MongoDB");
   } catch (error) {
     console.error("Error connecting to MongoDB:", error);
-    // Handle the error appropriately (e.g., throw an exception or exit the application)
   }
 }
 
 // Call the async function to connect to MongoDB
 connectToMongoDB();
 
-const CodeBlock = mongoose.model("CodeBlock", {
+const CodeBlockSchema = new mongoose.Schema({
   id: String,
   title: String,
   code: String,
-});
-const codeBlock = new CodeBlock({
-  id: "async-case",
-  title: "Async Case",
-  code: "This is the code of the async",
+  createdBy: String,
+  updatedAt: { type: Date, default: Date.now },
 });
 
-const codeBlocks = [
-  {
-    id: "async-case",
-    title: "Async Case",
-    code: "This is the code of the async",
-  },
-  // ... other code blocks ...
-];
-
-//Save the document using async/await
-async function saveDocument() {
-  try {
-    await codeBlock.save();
-    console.log("meow");
-    console.log("Document saved successfully");
-  } catch (error) {
-    console.error("Error saving document:", error);
-  }
-}
-
-// Call the async function to save the document
-saveDocument();
-
-// MongoDB connection URL and database name
-// const mongoURL = "mongodb://localhost:27017";
-// const dbName = "code_blocks_db"; // Replace with your actual database name
-
-// let db;
-
-// Connect to MongoDB
-// MongoClient.connect(mongoURL, { useUnifiedTopology: true }, (err, client) => {
-//   if (err) {
-//     console.error("Error connecting to MongoDB:", err);
-//     return;
-//   }
-
-//   console.log("Connected to MongoDB");
-
-//   // Select the database
-//   db = client.db(dbName);
-
-// Continue with your Socket.IO code
+const CodeBlock = mongoose.model("CodeBlock", CodeBlockSchema);
 
 const connectedClients = [];
-//
+
+// Function to emit all code blocks to a specific client
+const emitAllCodeBlocksToClient = async (socket) => {
+  try {
+    // Query the database to get all code blocks
+    const allCodeBlocks = await CodeBlock.find();
+    // Send the retrieved code blocks to the client
+    socket.emit("all_code_blocks", allCodeBlocks);
+  } catch (error) {
+    console.error("Error getting all code blocks:", error);
+  }
+};
+
 io.on("connection", (socket) => {
-  console.log(`User Connected: ${socket.id}`);
   connectedClients.push(socket.id);
   const roleClient = connectedClients.length === 1 ? "mentor" : "student";
-  console.log(roleClient);
-  console.log(connectedClients);
   socket.emit("role", { clientId: socket.id, role: roleClient });
-  // Send initial code blocks to the connected user
-  socket.emit("initial_code_blocks", codeBlocks);
+
+  // Listen for the "send_initial_code_blocks" event
+  socket.on("send_initial_code_blocks", async (initialCodeBlocks) => {
+    // Save the received code blocks to the database
+    try {
+      for (const block of initialCodeBlocks) {
+        // Check if the code block already exists in the database
+        const existingCodeBlock = await CodeBlock.findOne({ id: block.id });
+
+        if (!existingCodeBlock) {
+          const codeBlock = new CodeBlock({
+            id: block.id,
+            title: block.title,
+            code: block.code,
+            createdBy: socket.id, // Update this as needed
+            updatedAt: Date.now(),
+          });
+
+          await codeBlock.save();
+        }
+      }
+    } catch (error) {
+      console.error("Error saving initial code blocks:", error);
+    }
+  });
+
+  socket.on("get_all_code_blocks", async () => {
+    // Emit all code blocks to the connected user
+    emitAllCodeBlocksToClient(socket);
+  });
 
   socket.on("send_message", async (data) => {
-    // Save the message to MongoDB
-    //   await db.collection("messages").insertOne({
-    //     id: data.id,
-    //     message: data.message,
-    //   });
+    try {
+      // Update the code block in the database
+      await CodeBlock.findOneAndUpdate(
+        { id: data.id },
+        { code: data.message, updatedAt: Date.now() }
+      );
+    } catch (error) {
+      console.error("Error updating code block:", error);
+    }
 
-    // Broadcast the message to all connected clients, excluding the sender
-    console.log(data);
+    // Broadcast the updated code block to all connected clients
     socket.broadcast.emit("receive_message", {
       message: data.message,
       id: data.id,
@@ -111,14 +110,12 @@ io.on("connection", (socket) => {
 
   // Handle user disconnection
   socket.on("disconnect", () => {
-    console.log(`User Disconnected: ${socket.id}`);
     const index = connectedClients.indexOf(socket.id);
     if (index !== -1) {
       connectedClients.splice(index, 1);
     }
   });
 });
-// });
 
 const PORT = process.env.PORT || 3001;
 
