@@ -83,7 +83,7 @@ saveDocument();
 // Continue with your Socket.IO code
 
 const connectedClients = [];
-
+//
 io.on("connection", (socket) => {
   console.log(`User Connected: ${socket.id}`);
   connectedClients.push(socket.id);
