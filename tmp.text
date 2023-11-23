@@ -1,0 +1,67 @@
+const express = require("express");
+const app = express();
+const http = require("http");
+const { Server } = require("socket.io");
+const cors = require("cors");
+app.use(cors());
+
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST"],
+  },
+});
+const codeBlocks = [
+  {
+    id: "async-case",
+    title: "Async Case",
+    code: "This is the code of the async",
+  },
+  {
+    id: "promise-example",
+    title: "Promise Example",
+    code: "This is the code of the promise",
+  },
+  {
+    id: "event-handler",
+    title: "Event Handler",
+    code: "This is the code of the event-handler",
+  },
+  {
+    id: "arrow-function",
+    title: "Arrow Function",
+    code: "This is the code of the arrow function",
+  },
+];
+
+io.on("connection", (socket) => {
+  console.log(`User Connected:${socket.id}`);
+  // Send initial code blocks to the connected user
+  socket.emit("initial_code_blocks", codeBlocks);
+
+  socket.on("send_message", (data) => {
+    socket.broadcast.emit("receive_message", data);
+  });
+  socket.on("code_change", (data) => {
+    // Find the corresponding code block
+    const codeBlock = codeBlocks.find((block) => block.id === data.codeBlockId);
+
+    if (codeBlock) {
+      // Update the code for the specific code block
+      codeBlock.code = data.code;
+
+      // Broadcast the code change to all connected clients
+      io.emit("receive_code_change", {
+        codeBlockId: data.codeBlockId,
+        code: data.code,
+      });
+    }
+  });
+});
+
+const PORT = process.env.PORT || 3001;
+
+server.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});

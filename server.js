@@ -10,17 +10,20 @@ app.use(cors());
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "http://site-production-255a.up.railway.app",
     methods: ["GET", "POST"],
   },
 });
 
 async function connectToMongoDB() {
   try {
-    await mongoose.connect("mongodb://127.0.0.1:27017/codeBlocksDB", {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect(
+      "mongodb://monorail.proxy.rlwy.net:57262/codeBlocksDB",
+      {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      }
+    );
 
     console.log("Connected to MongoDB");
   } catch (error) {
