@@ -18,6 +18,7 @@ const io = new Server(server, {
 
 async function connectToMongoDB() {
   try {
+    console.log("connectToMongoDB -> start");
     await mongoose.connect(
       "mongodb://mongo:5CFceB3gAaa-F3eEBD4Fh-HA5515326F@monorail.proxy.rlwy.net:57262/codeBlocksDB",
       {
@@ -25,6 +26,8 @@ async function connectToMongoDB() {
         useUnifiedTopology: true,
       }
     );
+    console.log("connectToMongoDB -> after connect");
+
     // Check if the database exists, create it if not
     const adminDb = mongoose.connection.db.admin();
     const databases = await adminDb.listDatabases();
@@ -33,6 +36,8 @@ async function connectToMongoDB() {
     );
 
     if (!databaseExists) {
+      console.log("connectToMongoDB -> db not exists");
+
       await adminDb.createDatabase("codeBlocksDB");
     }
     console.log("Connected to MongoDB");
@@ -42,7 +47,7 @@ async function connectToMongoDB() {
 }
 
 // Call the async function to connect to MongoDB
-connectToMongoDB();
+await connectToMongoDB();
 
 const CodeBlockSchema = new mongoose.Schema({
   id: String,
@@ -60,6 +65,7 @@ const connectedClients = [];
 const emitAllCodeBlocksToClient = async (socket) => {
   try {
     // Query the database to get all code blocks
+    console.log("emitAllCodeBlocksToClient");
     const allCodeBlocks = await CodeBlock.find();
     // Send the retrieved code blocks to the client
     socket.emit("all_code_blocks", allCodeBlocks);
@@ -99,6 +105,8 @@ io.on("connection", (socket) => {
   });
 
   socket.on("get_all_code_blocks", async () => {
+    console.log("get_all_code_blocks -> start");
+
     // Emit all code blocks to the connected user
     emitAllCodeBlocksToClient(socket);
   });
