@@ -2,7 +2,7 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
-const { connectToMongoDB, CodeBlock } = require("./mongodb");
+const mongoose = require("mongoose");
 const { env } = require("process");
 
 const app = express();
@@ -16,8 +16,34 @@ const io = new Server(server, {
   },
 });
 
+async function connectToMongoDB() {
+  try {
+    await mongoose.connect(
+      "mongodb://mongo:5CFceB3gAaa-F3eEBD4Fh-HA5515326F@mongodb.railway.internal:27017",
+      {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      }
+    );
+
+    console.log("Connected to MongoDB");
+  } catch (error) {
+    console.error("Error connecting to MongoDB:", error);
+  }
+}
+
 // Call the async function to connect to MongoDB
 connectToMongoDB();
+
+const CodeBlockSchema = new mongoose.Schema({
+  id: String,
+  title: String,
+  code: String,
+  createdBy: String,
+  updatedAt: { type: Date, default: Date.now },
+});
+
+const CodeBlock = mongoose.model("CodeBlock", CodeBlockSchema);
 
 const connectedClients = [];
 
