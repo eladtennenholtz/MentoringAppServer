@@ -15,7 +15,7 @@ const io = new Server(server, {
     methods: ["*"],
   },
 });
-
+//connection to mongo
 async function connectToMongoDB() {
   try {
     await mongoose.connect(
