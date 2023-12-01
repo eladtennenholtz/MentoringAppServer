@@ -41,6 +41,7 @@ const CodeBlockSchema = new mongoose.Schema({
   code: String,
   createdBy: String,
   updatedAt: { type: Date, default: Date.now },
+  solution: String,
 });
 
 const CodeBlock = mongoose.model("CodeBlock", CodeBlockSchema);
@@ -79,6 +80,7 @@ io.on("connection", (socket) => {
             code: block.code,
             createdBy: socket.id, // Update this as needed
             updatedAt: Date.now(),
+            solution: block.solution,
           });
 
           await codeBlock.save();
